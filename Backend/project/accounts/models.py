@@ -73,23 +73,3 @@ class User(AbstractBaseUser):
         "Is the user a member of staff?"
         return self.is_admin
 
-# # Custom authentication backend to allow login by email or username
-# UserModel = get_user_model()
-
-# class EmailOrUsernameBackend(ModelBackend):
-#     def authenticate(self, request, username=None, password=None, **kwargs):
-#         if username is None:
-#             username = kwargs.get(UserModel.USERNAME_FIELD)
-
-#         try:
-#             if '@' in username:
-#                 user = UserModel.objects.get(email__iexact=username)
-#             else:
-#                 user = UserModel.objects.get(username__iexact=username)
-#         except UserModel.DoesNotExist:
-#             # Return None if no user is found.
-#             return None
-
-#         if user.check_password(password) and self.user_can_authenticate(user):
-#             return user
-#         return None

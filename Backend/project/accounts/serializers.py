@@ -1,4 +1,7 @@
 from rest_framework import serializers
+from django.contrib.auth import authenticate
+from django.contrib.auth.models import update_last_login
+from rest_framework.exceptions import AuthenticationFailed
 
 from .utils import Util
 from .models import User
@@ -6,6 +9,9 @@ from .models import User
 from django.utils.encoding import smart_str, force_bytes, DjangoUnicodeDecodeError
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
+
+
+
 class UserRegistrationSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -14,12 +20,39 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             'password': {'write_only': True}
         }
 
+    def validate_username(self, value): #Todo : Classic Username validation
+        if " " in value:
+            raise serializers.ValidationError("Username cannot contain spaces.")
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("This username is already taken.")
+        return value
+
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("This email is already registered.")
+        return value
+
     def create(self, validated_data):
         return User.objects.create_user(**validated_data)
+    
   
 class UserLoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
+
+    def validate(self, data):
+        email = data.get('email')
+        password = data.get('password')
+
+        user = authenticate(username=email, password=password)  # `username` is required for `authenticate()`
+        if user is None:
+            raise AuthenticationFailed('Invalid email or password')
+
+        # Update last login timestamp
+        update_last_login(None, user)
+
+        data['user'] = user
+        return data
 
 class UserProfileSerializer(serializers.ModelSerializer):
     
@@ -28,10 +61,12 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = ["id", "email", "username"]
 
 class UserChangePasswordSerializer(serializers.Serializer):
-    password = serializers.CharField(_MAX_LENGTH= 255, style=
+    password = serializers.CharField(max_length=255, style=
+    {'input_type': 'password'}, write_only=True)
+
+    password2 = serializers.CharField(max_length= 255, style=
     {'input_type':'password'}, write_only=True)
-    password2 = serializers.CharField(_MAX_LENGTH= 255, style=
-    {'input_type':'password'}, write_only=True)
+
     class Meta:
         fields = ["password", "password2"]
     
@@ -44,7 +79,13 @@ class UserChangePasswordSerializer(serializers.Serializer):
             raise serializers.ValidationError("Password and Confirm Password doesn't match")
         user.set_password(password)
         user.save()
-
+        #send Email
+        # data= {
+        #     'subject':'Your Password Has Been Changed Successfully ',
+        #     'body':"",
+        #     'to_email':user.email,
+        # }
+        # Util.send_email(data)
         return attrs
 
 class SendPasswordResetEmailSerializer(serializers.Serializer):
@@ -60,12 +101,13 @@ class SendPasswordResetEmailSerializer(serializers.Serializer):
             uid = urlsafe_base64_encode(force_bytes(user.id))
             token = PasswordResetTokenGenerator().make_token(user)
 
+            # Reminder : '{ClientURL}/v1/api/user/reset/'+uid+'/'+token+'/'
             link = 'http://localhost:3000/v1/api/user/reset/'+uid+'/'+token+'/'
             print('password reset link', link)
             #send Email
             data= {
                 'subject':'Reset Your Password',
-                'body':'Reset Your Password',
+                'body':"",
                 'to_email':user.email,
             }
             Util.send_email(data)
@@ -75,9 +117,9 @@ class SendPasswordResetEmailSerializer(serializers.Serializer):
             raise serializers.ValidationError('You are not a Registered User')
 
 class UserPasswordResetSerializer(serializers.Serializer):
-    password = serializers.CharField(_MAX_LENGTH= 255, style=
+    password = serializers.CharField(max_length= 255, style=
     {'input_type':'password'}, write_only=True)
-    password2 = serializers.CharField(_MAX_LENGTH= 255, style=
+    password2 = serializers.CharField(max_length= 255, style=
     {'input_type':'password'}, write_only=True)
     class Meta:
         fields = ["password", "password2"]
