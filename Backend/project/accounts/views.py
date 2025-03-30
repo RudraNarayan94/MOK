@@ -4,8 +4,7 @@ from rest_framework.views import APIView
 from .serializers import *
 from .renderers import UserRenderer
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.permissions import IsAuthenticated
-from .utils import Util
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
 def get_tokens_for_user(user):
   refresh = RefreshToken.for_user(user)
@@ -14,6 +13,25 @@ def get_tokens_for_user(user):
     'refresh' : str(refresh),
     'access' : str(refresh.access_token),
   }
+
+
+class RefreshTokenView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        refresh_token = request.data.get("refresh")
+
+        if not refresh_token:
+            return Response({"error": "Refresh token is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            refresh = RefreshToken(refresh_token)  # Validate the token
+            access_token = str(refresh.access_token)  # Generate a new access token
+
+            return Response({"access": access_token}, status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            return Response({"error": "Invalid refresh token"}, status=status.HTTP_401_UNAUTHORIZED)
 
 class UserRegistrationView(APIView):
     renderer_classes = [UserRenderer]
@@ -61,7 +79,7 @@ class UserChangePasswordView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, format=None):
-      serializer = UserProfileSerializer(data = request.data, context={'user' : request.user})
+      serializer = UserChangePasswordSerializer(data = request.data, context={'user' : request.user})
 
       serializer.is_valid(raise_exception=True)
       return Response({'msg': 'Password Changed Successfully'},
