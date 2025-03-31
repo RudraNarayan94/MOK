@@ -14,7 +14,6 @@ def get_tokens_for_user(user):
     'access' : str(refresh.access_token),
   }
 
-
 class RefreshTokenView(APIView):
     permission_classes = [AllowAny]
 
@@ -25,8 +24,8 @@ class RefreshTokenView(APIView):
             return Response({"error": "Refresh token is required"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            refresh = RefreshToken(refresh_token)  # Validate the token
-            access_token = str(refresh.access_token)  # Generate a new access token
+            refresh = RefreshToken(refresh_token)  
+            access_token = str(refresh.access_token)  
 
             return Response({"access": access_token}, status=status.HTTP_200_OK)
         
@@ -42,13 +41,6 @@ class UserRegistrationView(APIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         token = get_tokens_for_user(user)
-        #send Email
-        # data={
-        #       'subject':'Welcome to MOK – Your Journey Begins Here!',
-        #       'body':"",
-        #       'to_email':user.email,
-        #     }
-        # Util.send_email(data)
         return Response({'token': token, 'msg': 'Registration Successful'},
                         status=status.HTTP_201_CREATED)
 

@@ -35,7 +35,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = User.objects.create_user(**validated_data)
 
-        # Send Welcome Email
+        # Sending Welcome Email
         data = {
             "subject": "Welcome to MOK – Ready to Type Like a Speed Demon?",
             "body": f"""
@@ -75,11 +75,11 @@ class UserLoginSerializer(serializers.Serializer):
         email = data.get('email')
         password = data.get('password')
 
-        user = authenticate(username=email, password=password)  # `username` is required for `authenticate()`
+        user = authenticate(username=email, password=password)  
         if user is None:
             raise AuthenticationFailed('Invalid email or password')
 
-        # Update last login timestamp
+        # Updating last login timestamp
         update_last_login(None, user)
 
         data['user'] = user
@@ -151,7 +151,6 @@ class SendPasswordResetEmailSerializer(serializers.Serializer):
             link = f'http://localhost:3000/v1/api/user/reset/{uid}/{token}/'
             print('Password reset link:', link)
 
-            # Send email with HTML formatting
             data = {
                 'subject': 'Reset Your Password',
                 'body': f"""
@@ -209,7 +208,6 @@ class UserPasswordResetSerializer(serializers.Serializer):
         if not PasswordResetTokenGenerator().check_token(user, token):
             raise serializers.ValidationError("Token is not valid or expired.")
 
-        # Update password and save user
         user.set_password(password)
         user.save()
 
