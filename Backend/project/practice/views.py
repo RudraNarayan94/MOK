@@ -12,7 +12,7 @@ class PracticeSessionView(APIView):
 
     def post(self, request, format=None):
         serializer = PracticeSessionSerializer(data=request.data)
-        
+
         serializer.is_valid(raise_exception=True)
         serializer.save(user=request.user)
         return Response({"msg": "Session recorded successfully"}, status=status.HTTP_201_CREATED)

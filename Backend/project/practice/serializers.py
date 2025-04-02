@@ -4,4 +4,6 @@ from .models import PracticeSession
 class PracticeSessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = PracticeSession
-        fields = ['time_taken', 'text_length', 'errors', 'speed', 'accuracy']
+        fields = ['time_taken', 'speed', 'accuracy']
+
+        
