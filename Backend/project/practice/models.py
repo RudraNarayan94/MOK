@@ -48,9 +48,9 @@ class UserProfile(models.Model):
     avg_accuracy = models.FloatField(default=0)
     
     # Additional features
-    daily_streak = models.PositiveIntegerField(default=0)
-    world_rank = models.PositiveIntegerField(null=True, blank=True)
-    rank_percentile = models.FloatField(null=True, blank=True)
+    # daily_streak = models.PositiveIntegerField(default=0)
+    # world_rank = models.PositiveIntegerField(null=True, blank=True)
+    # rank_percentile = models.FloatField(null=True, blank=True)
 
     def __str__(self):
         return self.user.username
