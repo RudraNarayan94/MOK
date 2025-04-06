@@ -36,24 +36,24 @@ class DailyStatistics(models.Model):
         return f"{self.user.username} -> {self.date}"
 
 
-class UserProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+# class UserProfile(models.Model):
+#     user = models.OneToOneField(User, on_delete=models.CASCADE)
     
-    # All-time statistics
-    total_time_spent = models.PositiveIntegerField(default=0)  
-    total_lessons_completed = models.PositiveIntegerField(default=0)
-    top_speed = models.FloatField(default=0)  
-    avg_speed = models.FloatField(default=0)
-    top_accuracy = models.FloatField(default=0)  
-    avg_accuracy = models.FloatField(default=0)
+#     # All-time statistics
+#     total_time_spent = models.PositiveIntegerField(default=0)  
+#     total_lessons_completed = models.PositiveIntegerField(default=0)
+#     top_speed = models.FloatField(default=0)  
+#     avg_speed = models.FloatField(default=0)
+#     top_accuracy = models.FloatField(default=0)  
+#     avg_accuracy = models.FloatField(default=0)
     
-    # Additional features
-    # daily_streak = models.PositiveIntegerField(default=0)
-    # world_rank = models.PositiveIntegerField(null=True, blank=True)
-    # rank_percentile = models.FloatField(null=True, blank=True)
+#     # Additional features
+#     # daily_streak = models.PositiveIntegerField(default=0)
+#     # world_rank = models.PositiveIntegerField(null=True, blank=True)
+#     # rank_percentile = models.FloatField(null=True, blank=True)
 
-    def __str__(self):
-        return self.user.username
+#     def __str__(self):
+#         return self.user.username
     
 class Leaderboard(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
