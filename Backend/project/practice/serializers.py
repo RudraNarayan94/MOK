@@ -18,19 +18,17 @@ class DailyStatisticsSerializer(serializers.ModelSerializer):
             "date", "total_time", "lessons_completed",
             "top_speed", "avg_speed", "top_accuracy", "avg_accuracy"
         ]
-class AllTimeStatisticsSerializer(serializers.Serializer):
-    total_time = serializers.IntegerField()
-    lessons_completed = serializers.IntegerField()
-    top_speed = serializers.FloatField()
-    avg_speed = serializers.FloatField()
-    top_accuracy = serializers.FloatField()
-    avg_accuracy = serializers.FloatField()
+class AllTimeStatisticsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AllTimeStatistics
+        fields = [
+            "total_time_spent","total_lessons_completed","top_speed",
+            "avg_speed", "top_accuracy","avg_accuracy"
+        ]
 
 
 
 class StreakSerializer(serializers.Serializer):
     current_streak = serializers.IntegerField()
 
-class LeaderboardEntrySerializer(serializers.Serializer):
-    username = serializers.CharField()
-    best_wpm = serializers.FloatField()
+
