@@ -6,8 +6,16 @@ from .renderers import UserRenderer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
+
+class CustomToken(RefreshToken):
+    @classmethod
+    def for_user(cls, user):
+        token = super().for_user(user)
+        token['username'] = user.username  
+        return token
+    
 def get_tokens_for_user(user):
-  refresh = RefreshToken.for_user(user)
+  refresh = CustomToken.for_user(user)
 
   return {
     'refresh' : str(refresh),
@@ -41,6 +49,7 @@ class UserRegistrationView(APIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         token = get_tokens_for_user(user)
+        token['username'] = user.username
         return Response({'token': token, 'msg': 'Registration Successful'},
                         status=status.HTTP_201_CREATED)
 

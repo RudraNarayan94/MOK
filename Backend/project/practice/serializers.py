@@ -2,10 +2,19 @@ from rest_framework import serializers
 from .models import *
 
 class PracticeSessionSerializer(serializers.ModelSerializer):
+    user = serializers.HiddenField(
+        default=serializers.CurrentUserDefault()
+    )
+
     class Meta:
         model = PracticeSession
-        fields = ["id", "user", "speed", "accuracy", "time_taken", "timestamp"]
-        read_only_fields = ["timestamp"]
+        fields = [
+            'user',
+            'time_taken',
+            'speed',
+            'accuracy',
+        ]
+        read_only_fields = ["user","timestamp"]
 
     def create(self, validated_data):
         session = PracticeSession.objects.create(**validated_data)

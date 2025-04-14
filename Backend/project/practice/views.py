@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, serializers
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .serializers import *
 from .models import *
@@ -14,21 +14,31 @@ class PracticeSessionView(APIView):
     renderer_classes = [UserRenderer]
 
     def post(self, request, format=None):
-        serializer = PracticeSessionSerializer(data=request.data)
+        # pass request in context so CurrentUserDefault() works
+        serializer = PracticeSessionSerializer(
+            data=request.data,
+            context={'request': request}
+        )
 
         try:
             serializer.is_valid(raise_exception=True)
-            session = serializer.save(user=request.user)
+            session = serializer.save()  # user is injected automatically
 
             # updates
             update_daily_statistics(request.user)
             update_all_time_statistics(request.user)
 
-            return Response({"msg": "Session recorded successfully."}, status=status.HTTP_201_CREATED)
-
-        except serializers.ValidationError as e:
             return Response(
-                {"detail": "Invalid session data. Please check your input.", "errors": serializer.errors},
+                {"msg": "Session recorded successfully."},
+                status=status.HTTP_201_CREATED
+            )
+
+        except serializers.ValidationError:
+            return Response(
+                {
+                    "detail": "Invalid session data. Please check your input.",
+                    "errors": serializer.errors
+                },
                 status=status.HTTP_400_BAD_REQUEST
             )
         except Exception:
@@ -36,7 +46,6 @@ class PracticeSessionView(APIView):
                 {"detail": "Something went wrong while recording the session. Try again later."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
 
 
    
@@ -63,22 +72,31 @@ class AllTimeStatisticsView(APIView):
     renderer_classes = [UserRenderer]
 
     def get(self, request, format=None):
+        # 1) Try to fetch existing all-time stats
         try:
             stats = AllTimeStatistics.objects.get(user=request.user)
-            serializer = AllTimeStatisticsSerializer(stats)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
         except AllTimeStatistics.DoesNotExist:
-            return Response(
-                {"detail": "All-time statistics not available for this user."},
-                status=status.HTTP_404_NOT_FOUND
-            )
+            # 2) If none exist, compute from daily stats
+            if not DailyStatistics.objects.filter(user=request.user).exists():
+                return Response(
+                    {"detail": "No historical data available to compute all-time statistics."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
 
-        except Exception:
-            return Response(
-                {"detail": "Unable to load all-time statistics. Please try again later."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            update_all_time_statistics(request.user)
+
+            # 3) Retry fetch
+            try:
+                stats = AllTimeStatistics.objects.get(user=request.user)
+            except AllTimeStatistics.DoesNotExist:
+                return Response(
+                    {"detail": "All-time statistics could not be generated."},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+
+        # 4) Serialize and return
+        serializer = AllTimeStatisticsSerializer(stats)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class StreakView(APIView):
@@ -117,10 +135,10 @@ class UserRankView(APIView):
 
         percentile = round((total - position) / total * 100, 2)
         # Optionally save to profile
-        profile = request.user.userprofile
-        profile.world_rank = position
-        profile.rank_percentile = percentile
-        profile.save(update_fields=['world_rank', 'rank_percentile'])
+        # profile = request.user.userprofile
+        # profile.world_rank = position
+        # profile.rank_percentile = percentile
+        # profile.save(update_fields=['world_rank', 'rank_percentile'])
 
         return Response({"world_rank": position, "rank_percentile": percentile})
 
