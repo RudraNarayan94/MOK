@@ -22,9 +22,9 @@ urlpatterns = [
 
     path('v1/api/users/', include('accounts.urls')),
     path('v1/api/practice/', include('practice.urls')),
+    path('v1/multiplayer/', include('multiplayer.urls')),
     #path('v1/auth/', include('authentication.urls')),
 
-    # path('v1/multiplayer/', include('multiplayer.urls')),
     # path('v1/progress/', include('progress.urls')),
     # path('v1/admin/texts/', include('admin_panel.urls')),
 ]
