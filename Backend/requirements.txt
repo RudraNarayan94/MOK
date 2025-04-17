@@ -3,6 +3,10 @@ Django==5.1.7
 django-cors-headers==4.7.0
 djangorestframework==3.15.2
 djangorestframework_simplejwt==5.5.0
+dnspython==2.7.0
+email_validator==2.2.0
+idna==3.10
 PyJWT==2.10.1
+python-dotenv==1.1.0
 sqlparse==0.5.3
 tzdata==2025.1
