@@ -26,3 +26,13 @@ class LeaderboardEntrySerializer(serializers.Serializer):
     wpm = serializers.FloatField()
     accuracy = serializers.FloatField()
     finished_at = serializers.DateTimeField()
+
+class RoomHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Room
+        fields = [
+            'code',
+            'created_at',
+            'is_active',
+        ]
+        read_only_fields = fields

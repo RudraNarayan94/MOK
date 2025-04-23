@@ -23,10 +23,29 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         }
 
     def validate_username(self, value):
+        # Check for minimum and maximum length
+        if len(value) < 3:
+            raise serializers.ValidationError("Username must be at least 3 characters long.")
+        if len(value) > 30:
+            raise serializers.ValidationError("Username cannot exceed 30 characters.")
+            
+        # Check for spaces and special characters
         if " " in value:
             raise serializers.ValidationError("Username cannot contain spaces.")
-        if User.objects.filter(username=value).exists():
-            raise serializers.ValidationError("This username is already taken.")
+        if not value.isalnum() and not any(c in '_-' for c in value):
+            raise serializers.ValidationError("Username can only contain letters, numbers, hyphens, and underscores.")
+            
+        # Check for consecutive special characters
+        if '--' in value or '__' in value:
+            raise serializers.ValidationError("Username cannot contain consecutive hyphens or underscores.")
+            
+        # Check if username starts or ends with special characters
+        if value[0] in '-_' or value[-1] in '-_':
+            raise serializers.ValidationError("Username cannot start or end with hyphens or underscores.")
+            
+        # # Check for existing username (case-insensitive)
+        # if User.objects.filter(username__iexact=value).exists():
+        #     raise serializers.ValidationError("This username is already taken.")
         return value
 
     def validate_email(self, value):
@@ -65,16 +84,28 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     
   
 class UserLoginSerializer(serializers.Serializer):
-    email = serializers.EmailField()
+    # This will accept either email or username
+    login_field = serializers.CharField(write_only=True)  
     password = serializers.CharField(write_only=True)
 
     def validate(self, data):
-        email = data.get('email')
+        login_field = data.get('login_field')
         password = data.get('password')
 
-        user = authenticate(username=email, password=password)  
+        if not login_field or not password:
+            raise serializers.ValidationError("Both login field and password are required.")
+
+        if '@' in login_field:
+            user = authenticate(username=login_field, password=password)  
+        else:
+            try:
+                user_obj = User.objects.get(username__iexact=login_field)
+                user = authenticate(username=user_obj.email, password=password)
+            except User.DoesNotExist:
+                user = None
+
         if user is None:
-            raise AuthenticationFailed('Invalid email or password')
+            raise AuthenticationFailed('Invalid credentials')
 
         # Updating last login timestamp
         update_last_login(None, user)
@@ -90,16 +121,16 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = ["id", "email", "username"]
 
 class UserChangePasswordSerializer(serializers.Serializer):
-    password = serializers.CharField(max_length=255, style=
-    {'input_type': 'password'}, write_only=True)
+    old_password = serializers.CharField(write_only=True, style={'input_type': 'password'})
+    password = serializers.CharField(write_only=True, style={'input_type': 'password'})
+    password2 = serializers.CharField(write_only=True, style={'input_type': 'password'})
 
-    password2 = serializers.CharField(max_length= 255, style=
-    {'input_type':'password'}, write_only=True)
 
     class Meta:
-        fields = ["password", "password2"]
+        fields = ["old_password", "password", "password2"]
     
     def validate(self, attrs):
+        
         password = attrs.get('password')
         password2 = attrs.get('password2')
         user = self.context.get('user')
@@ -107,8 +138,12 @@ class UserChangePasswordSerializer(serializers.Serializer):
         if not user:
             raise serializers.ValidationError("User context is missing.")
         
+        if not user.check_password(attrs.get('old_password')):
+            raise serializers.ValidationError("Current password is incorrect")
+        
         if password != password2:
             raise serializers.ValidationError("Password and Confirm Password doesn't match")
+        
         user.set_password(password)
         user.save()
         #send Email

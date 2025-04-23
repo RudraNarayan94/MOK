@@ -3,6 +3,7 @@ from .views import *
 
 urlpatterns = [
     path('rooms/', RoomCreateView.as_view(), name='room-create'),
+    path('rooms/history/', RoomHistoryView.as_view(), name='room-history'),  
     path('rooms/<str:code>/join/', RoomJoinView.as_view(), name='room-join'),
     path('rooms/<str:code>/text/', RoomTextView.as_view(), name='room-text'),
     path('rooms/<str:code>/results/', RoomResultView.as_view(), name='room-results'),

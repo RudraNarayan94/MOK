@@ -123,3 +123,25 @@ class RoomLeaderboardView(APIView):
         serializer = LeaderboardEntrySerializer(data, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+class RoomHistoryView(APIView):
+    permission_classes = [IsAuthenticated]
+    renderer_classes = [UserRenderer]
+
+    def get(self, request, format=None):
+        try:
+            rooms = Room.objects.filter(host=request.user).order_by('-created_at')
+
+            if not rooms.exists():
+                return Response(
+                    {"detail": "You haven't created any rooms yet."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            serializer = RoomHistorySerializer(rooms, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        except Exception:
+            return Response(
+                {"detail": "Unable to load your room history. Please try again later."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
