@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     "corsheaders",
+    "celery",
 
     #Apps
     'accounts',
@@ -97,6 +98,19 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# DATABASES = {
+#   'default': {
+#     'ENGINE': 'django.db.backends.{}'.format(
+#              os.getenv('DATABASE_ENGINE', 'sqlite3')
+#     ),
+#     'NAME': os.environ.get('DB_NAME', 'postDb'),
+#     'USER': os.environ.get('DB_USER', 'postDbUser'),
+#     'PASSWORD': os.environ.get('DB_PASSWORD', 'postDbPassword'),
+#     'HOST': os.environ.get('DB_HOST', 'localhost'),
+#     'PORT': os.environ.get('DB_PORT', '5432'),
+#   }
+# }
 
 
 # Password validation
@@ -188,3 +202,11 @@ SIMPLE_JWT = {
     "TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainPairSerializer",
     "TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSerializer",
 }
+
+# Celery configuration for development
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+
+# # Celery configuration
+# CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+# CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')

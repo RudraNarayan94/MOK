@@ -130,7 +130,7 @@ class UserChangePasswordSerializer(serializers.Serializer):
         fields = ["old_password", "password", "password2"]
     
     def validate(self, attrs):
-        
+        old_password = attrs.get('old_password')
         password = attrs.get('password')
         password2 = attrs.get('password2')
         user = self.context.get('user')
@@ -138,7 +138,7 @@ class UserChangePasswordSerializer(serializers.Serializer):
         if not user:
             raise serializers.ValidationError("User context is missing.")
         
-        if not user.check_password(attrs.get('old_password')):
+        if not user.check_password(old_password):
             raise serializers.ValidationError("Current password is incorrect")
         
         if password != password2:

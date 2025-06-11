@@ -2,10 +2,9 @@ import os
 import logging
 from django.core.mail import EmailMessage
 from smtplib import SMTPAuthenticationError, SMTPException
-
+from .tasks import send_email_task
 logger = logging.getLogger(__name__)
 
-# from .tasks import send_email_task  # Import the celery task
 
 class EmailServices:
     @staticmethod
@@ -54,12 +53,11 @@ class EmailServices:
             """,
             "to_email": user.email,
         }
-        # try:
-            # If Celery is configured, this will dispatch the task asynchronously.
-            # send_email_task.delay(data)
-        # except Exception as e:
-            # logger.error("Celery task failed, falling back to synchronous email sending.")
-        EmailServices.send_email(data)
+        try:
+            send_email_task.delay(data)
+        except Exception as e:
+            logger.error("Celery task failed, falling back to synchronous email sending.")
+            EmailServices.send_email(data)
 
 
     @staticmethod
@@ -79,12 +77,11 @@ class EmailServices:
                 """,
                 'to_email': user.email,
             }
-        # try:
-            # If Celery is configured, this will dispatch the task asynchronously.
-            # send_email_task.delay(data)
-        # except Exception as e:
-            # logger.error("Celery task failed, falling back to synchronous email sending.")
-        EmailServices.send_email(data)
+        try:
+            send_email_task.delay(data)
+        except Exception as e:
+            logger.error("Celery task failed, falling back to synchronous email sending.")
+            EmailServices.send_email(data)
         
     @staticmethod
     def send_password_reset_email(user, link):
@@ -109,9 +106,8 @@ class EmailServices:
                 """,
                 'to_email': user.email,
             }
-        # try:
-            # If Celery is configured, this will dispatch the task asynchronously.
-            # send_email_task.delay(data)
-        # except Exception as e:
-            # logger.error("Celery task failed, falling back to synchronous email sending.")
+        try:
+            send_email_task.delay(data)
+        except Exception as e:
+            logger.error("Celery task failed, falling back to synchronous email sending.")
         EmailServices.send_email(data)
