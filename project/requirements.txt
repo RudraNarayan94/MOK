@@ -26,3 +26,5 @@ sqlparse==0.5.3
 tzdata==2025.2
 vine==5.1.0
 wcwidth==0.2.13
+dotenv==0.9.9
+python-dotenv==1.1.0
