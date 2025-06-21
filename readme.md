@@ -18,12 +18,7 @@ Welcome to our Typing Website! This platform is designed to help users improve t
 
 ## Installation
 
-### Prerequisites
 
-- Python 3.8+
-- Node.js 14+
-- npm or yarn
-- Virtual environment (optional)
 
 ### Backend Setup
 
