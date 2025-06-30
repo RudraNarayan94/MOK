@@ -18,15 +18,13 @@ Welcome to our Typing Website! This platform is designed to help users improve t
 
 ## Installation
 
-
-
 ### Backend Setup
 
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/your-repo/typing-website.git
-cd typing-website/backend
+git clone https://github.com/RudraNarayan94/MOK.git
+cd MOK
 ```
 
 2. Create and activate a virtual environment:
