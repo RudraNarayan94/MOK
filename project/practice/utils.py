@@ -1,4 +1,3 @@
-# from celery import shared_task
 from .models import PracticeSession, DailyStatistics, AllTimeStatistics
 from django.utils import timezone
 from django.db.models import Avg, Max, Sum, Count

@@ -7,8 +7,8 @@ from .models import *
 from accounts.renderers import UserRenderer
 from django.utils import timezone
 from datetime import timedelta
-from .utils import update_daily_statistics, update_all_time_statistics
-
+from .tasks import update_daily_statistics_task, update_all_time_statistics_task
+from .utils import *
 class PracticeSessionView(APIView):
     permission_classes = [IsAuthenticated]
     renderer_classes = [UserRenderer]
@@ -24,9 +24,9 @@ class PracticeSessionView(APIView):
             serializer.is_valid(raise_exception=True)
             session = serializer.save()  # user is injected automatically
 
-            # updates
-            update_daily_statistics(request.user)
-            update_all_time_statistics(request.user)
+             # Async updates
+            update_daily_statistics_task.delay(request.user.id)
+            update_all_time_statistics_task.delay(request.user.id)
 
             return Response(
                 {"msg": "Session recorded successfully."},
