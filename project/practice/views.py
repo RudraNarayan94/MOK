@@ -9,6 +9,8 @@ from django.utils import timezone
 from datetime import timedelta
 from .tasks import update_daily_statistics_task, update_all_time_statistics_task
 from .utils import *
+from django.core.cache import cache
+
 class PracticeSessionView(APIView):
     permission_classes = [IsAuthenticated]
     renderer_classes = [UserRenderer]
@@ -72,20 +74,20 @@ class AllTimeStatisticsView(APIView):
     renderer_classes = [UserRenderer]
 
     def get(self, request, format=None):
-        # 1) Try to fetch existing all-time stats
+        cache_key = f"all_time_stats:{request.user.id}"
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            return Response(cached_data, status=status.HTTP_200_OK)
+
         try:
             stats = AllTimeStatistics.objects.get(user=request.user)
         except AllTimeStatistics.DoesNotExist:
-            # 2) If none exist, compute from daily stats
             if not DailyStatistics.objects.filter(user=request.user).exists():
                 return Response(
                     {"detail": "No historical data available to compute all-time statistics."},
                     status=status.HTTP_404_NOT_FOUND
                 )
-
             update_all_time_statistics(request.user)
-
-            # 3) Retry fetch
             try:
                 stats = AllTimeStatistics.objects.get(user=request.user)
             except AllTimeStatistics.DoesNotExist:
@@ -94,9 +96,10 @@ class AllTimeStatisticsView(APIView):
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
 
-        # 4) Serialize and return
         serializer = AllTimeStatisticsSerializer(stats)
+        cache.set(cache_key, serializer.data, timeout=300)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 
 class StreakView(APIView):
@@ -126,21 +129,24 @@ class UserRankView(APIView):
     renderer_classes = [UserRenderer]
 
     def get(self, request, format=None):
+        cache_key = f"user_rank:{request.user.id}"
+        cached = cache.get(cache_key)
+        if cached:
+            return Response(cached, status=status.HTTP_200_OK)
+
         stats_qs = AllTimeStatistics.objects.filter(top_speed__gt=0).order_by('-top_speed')
         total = stats_qs.count()
+
         try:
             position = list(stats_qs.values_list('user_id', flat=True)).index(request.user.id) + 1
         except ValueError:
             return Response({"detail": "No typing data."}, status=status.HTTP_404_NOT_FOUND)
 
         percentile = round((total - position) / total * 100, 2)
-        # Optionally save to profile
-        # profile = request.user.userprofile
-        # profile.world_rank = position
-        # profile.rank_percentile = percentile
-        # profile.save(update_fields=['world_rank', 'rank_percentile'])
+        response_data = {"world_rank": position, "rank_percentile": percentile}
+        cache.set(cache_key, response_data, timeout=300)
+        return Response(response_data, status=status.HTTP_200_OK)
 
-        return Response({"world_rank": position, "rank_percentile": percentile})
 
 
 class LeaderboardView(APIView):
@@ -149,27 +155,25 @@ class LeaderboardView(APIView):
 
     def get(self, request, format=None):
         sort_by = request.query_params.get("sort_by", "top_speed")
-
         if sort_by not in ["top_speed", "avg_speed"]:
             return Response(
                 {"detail": "Invalid parameter. Use 'sort_by=top_speed' or 'sort_by=avg_speed'."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        stats_qs = AllTimeStatistics.objects.filter(**{f"{sort_by}__gt": 0}).order_by(f"-{sort_by}")[:10]
+        cache_key = f"leaderboard:{sort_by}"
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            return Response(cached_data, status=status.HTTP_200_OK)
 
+        stats_qs = AllTimeStatistics.objects.filter(
+            **{f"{sort_by}__gt": 0}).order_by(f"-{sort_by}")[:10]
         if not stats_qs.exists():
             return Response(
                 {"detail": f"No leaderboard data found for '{sort_by}'."},
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        data = [
-            {
-                "username": stat.user.username,
-                "wpm": getattr(stat, sort_by)
-            }
-            for stat in stats_qs
-        ]
+        data = [{"username": stat.user.username, "wpm": getattr(stat, sort_by)} for stat in stats_qs]
+        cache.set(cache_key, data, timeout=120)
         return Response(data, status=status.HTTP_200_OK)
-

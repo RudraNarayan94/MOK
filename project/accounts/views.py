@@ -5,6 +5,7 @@ from .serializers import *
 from .renderers import UserRenderer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from django.core.cache import cache
 
 
 class CustomToken(RefreshToken):
@@ -70,9 +71,16 @@ class UserProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, format=None):
-      serializer = UserProfileSerializer(request.user)
+        user_id = request.user.id
+        cache_key = f"user_profile:{user_id}"
+        data = cache.get(cache_key)
 
-      return Response(serializer.data, status=status.HTTP_200_OK)
+        if not data:
+            serializer = UserProfileSerializer(request.user)
+            data = serializer.data
+            cache.set(cache_key, data, timeout=60 * 5)  # Cache for 5 minutes
+
+        return Response(data, status=status.HTTP_200_OK)
     
 
 class UserChangePasswordView(APIView):
