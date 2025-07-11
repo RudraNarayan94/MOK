@@ -1,6 +1,13 @@
 from django.db import models
 from accounts.models import User
 
+class TextSnippet(models.Model):
+    index   = models.PositiveIntegerField(unique=True)
+    content = models.TextField()
+
+    def __str__(self):
+        return f"Snippet #{self.index}"
+    
 # Create your models here.
 class PracticeSession(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="practice_sessions")
