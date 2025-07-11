@@ -1,3 +1,4 @@
+import random
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, serializers
@@ -16,14 +17,23 @@ class TextSnippetView(APIView):
     permission_classes = [IsAuthenticated]
     renderer_classes = [UserRenderer]
 
-    def get(self, request, index, format=None):
+    def get(self, request, format=None):
+        count = TextSnippet.objects.count()
+        if count == 0:
+            return Response(
+                {"detail": "No text snippets available."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # random offset in [0, count–1]
+        index = random.randint(0, count - 1)
         cache_key = f"text_snippet:{index}"
         data = cache.get(cache_key)
         if not data:
             try:
                 snippet = TextSnippet.objects.get(index=index)
             except TextSnippet.DoesNotExist:
-                return Response({"detail":"Not found."}, status=404)
+                return Response({"detail":"Not found."}, status=status.HTTP_404_NOT_FOUND)
             data = TextSnippetSerializer(snippet).data
             cache.set(cache_key, data, timeout=60*60)  # 1hr
         return Response(data, status=status.HTTP_200_OK)
