@@ -1,6 +1,10 @@
 from rest_framework import serializers
 from .models import *
 
+class TextSnippetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TextSnippet
+        fields = ['index', 'content']
 class PracticeSessionSerializer(serializers.ModelSerializer):
     user = serializers.HiddenField(
         default=serializers.CurrentUserDefault()

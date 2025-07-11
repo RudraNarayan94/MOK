@@ -11,6 +11,24 @@ from .tasks import update_daily_statistics_task, update_all_time_statistics_task
 from .utils import *
 from django.core.cache import cache
 
+
+class TextSnippetView(APIView):
+    permission_classes = [IsAuthenticated]
+    renderer_classes = [UserRenderer]
+
+    def get(self, request, index, format=None):
+        cache_key = f"text_snippet:{index}"
+        data = cache.get(cache_key)
+        if not data:
+            try:
+                snippet = TextSnippet.objects.get(index=index)
+            except TextSnippet.DoesNotExist:
+                return Response({"detail":"Not found."}, status=404)
+            data = TextSnippetSerializer(snippet).data
+            cache.set(cache_key, data, timeout=60*60)  # 1hr
+        return Response(data, status=status.HTTP_200_OK)
+    
+
 class PracticeSessionView(APIView):
     permission_classes = [IsAuthenticated]
     renderer_classes = [UserRenderer]
