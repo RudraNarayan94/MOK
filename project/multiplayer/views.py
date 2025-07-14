@@ -17,6 +17,14 @@ class RoomCreateView(APIView):
         serializer.is_valid(raise_exception=True)
         room = serializer.save()
         return Response({'code': room.code}, status=status.HTTP_201_CREATED)
+class RoomHistoryView(APIView):
+    permission_classes = [IsAuthenticated]
+    renderer_classes = [UserRenderer]
+
+    def get(self, request, format=None):
+        rooms = Room.objects.filter(host=request.user).order_by('-created_at')
+        serializer = RoomHistorySerializer(rooms, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class RoomJoinView(APIView):
     permission_classes = [IsAuthenticated]
