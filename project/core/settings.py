@@ -50,10 +50,8 @@ INSTALLED_APPS = [
 
     #Apps
     'accounts',
-    # 'practice',
+    'practice',
     'multiplayer',
-    'practice.apps.PracticeConfig',
-
 ]
 
 MIDDLEWARE = [
