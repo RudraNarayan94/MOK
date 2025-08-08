@@ -176,6 +176,30 @@ class UserRankView(APIView):
         return Response(response_data, status=status.HTTP_200_OK)
 
 
+class GraphDataView(APIView):
+    permission_classes = [IsAuthenticated]
+    renderer_classes = [UserRenderer]
+
+    def get(self, request, format=None):
+        user = request.user
+        cache_key = f"user:{user.id}:graph_data"
+
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            return Response(cached_data, status=status.HTTP_200_OK)
+
+        stats = DailyStatistics.objects.filter(user=user).order_by('-date')
+
+        if stats.count() < 30:
+            return Response(
+                {"detail": "Complete at least 30 lessons to unlock the graph."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        serializer = GraphDataSerializer(stats, many=True)
+        cache.set(cache_key, serializer.data, timeout=60 * 15) 
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class LeaderboardView(APIView):
     permission_classes = [AllowAny]

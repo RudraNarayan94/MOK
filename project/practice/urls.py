@@ -8,5 +8,6 @@ urlpatterns = [
     path('all_time_stats/', AllTimeStatisticsView.as_view(), name='all_time_stats'),
     path('streak/', StreakView.as_view(), name='streak'),
     path('user_rank/', UserRankView.as_view(), name='user_rank'),
+    path('graph/', GraphDataView.as_view(), name='graph'),
     path('leaderboard/', LeaderboardView.as_view(), name='leaderboard'),
 ]

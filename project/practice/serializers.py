@@ -44,4 +44,8 @@ class AllTimeStatisticsSerializer(serializers.ModelSerializer):
 class StreakSerializer(serializers.Serializer):
     current_streak = serializers.IntegerField()
 
+class GraphDataSerializer(serializers.Serializer):
+    date = serializers.DateField()
+    wpm = serializers.FloatField()
+    accuracy = serializers.FloatField()
 

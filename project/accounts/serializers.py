@@ -121,16 +121,16 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = ["id", "email", "username"]
 
 class UserChangePasswordSerializer(serializers.Serializer):
-    old_password = serializers.CharField(write_only=True, style={'input_type': 'password'})
+    # old_password = serializers.CharField(write_only=True, style={'input_type': 'password'})
     password = serializers.CharField(write_only=True, style={'input_type': 'password'})
     password2 = serializers.CharField(write_only=True, style={'input_type': 'password'})
 
 
     class Meta:
-        fields = ["old_password", "password", "password2"]
+        fields = [ "password", "password2"]
     
     def validate(self, attrs):
-        old_password = attrs.get('old_password')
+        # old_password = attrs.get('old_password')
         password = attrs.get('password')
         password2 = attrs.get('password2')
         user = self.context.get('user')
@@ -138,8 +138,8 @@ class UserChangePasswordSerializer(serializers.Serializer):
         if not user:
             raise serializers.ValidationError("User context is missing.")
         
-        if not user.check_password(old_password):
-            raise serializers.ValidationError("Current password is incorrect")
+        # if not user.check_password(old_password):
+        #     raise serializers.ValidationError("Current password is incorrect")
         
         if password != password2:
             raise serializers.ValidationError("Password and Confirm Password doesn't match")
@@ -165,7 +165,7 @@ class SendPasswordResetEmailSerializer(serializers.Serializer):
             token = PasswordResetTokenGenerator().make_token(user)
 
             # Password reset link (frontend URL)
-            link = f'http://localhost:3000/v1/api/user/reset/{uid}/{token}/'
+            link = f'http://localhost:5173/reset/{uid}/{token}/'
             print('Password reset link:', link)            
 
             EmailServices.send_password_reset_email(user, link)
